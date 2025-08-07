@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, Text, View } from 'react-native';
+import { SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 import {Stack, useRouter} from 'expo-router';
 import {COLORS , icons , images , SIZES} from '../constants';
@@ -14,7 +14,27 @@ export default function Home() {
       <Stack.Screen 
       options={{
         headerStyle:{backgroundColor:COLORS.lightWhite},
+        headerShadowVisible:false,
+        headerLeft:(()=>
+            <ScreenHeaderBtn iconUrl={icons.menu} dimension="70%"/>
+        ),
+        headerRight: (()=>
+        <ScreenHeaderBtn iconUrl={images.profile} dimension="100%"/>),
+        headerTitle:"",
       }}/>
+
+      <ScrollView showsVerticalScrollIndicator={false}
+      style={{flex:1,padding:SIZES.medium}}>
+
+        <Welcome></Welcome>
+
+        <Popularjobs />
+        <Nearbyjobs />
+
+      </ScrollView>
+
+      
+
     </SafeAreaView>
   );
 }

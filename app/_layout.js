@@ -29,7 +29,13 @@ const Layout = () => {
   if (!fontsLoaded) return null;
 
   return (
-    <Stack onLayout={onLayoutRootView} />
+    <Stack
+    onLayout={onLayoutRootView}
+    screenOptions={{
+      headerShadowVisible: false,
+      headerStyle: { backgroundColor: "#F3F4F8" },
+    }}
+  />
   );
 };
 

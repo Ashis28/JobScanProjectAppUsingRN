@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from "react";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -7,7 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
 
 import {
   Company,
@@ -20,34 +20,32 @@ import {
 import { COLORS, icons, SIZES } from "../../constants";
 import useFetch from "../../hook/useFetch";
 
-const tabs = ["About", "Qualifications", "Responsibilities"];
+const tabs = ["About", "Qualification", "Responsibilities"];
 
 const JobDetails = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { jobId } = route.params || {};
-
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState(tabs[0]);
+  const params = useLocalSearchParams();
 
   const { data, isLoading, error, refetch } = useFetch("job-details", {
-    job_id: jobId,
+    job_id: params.id, 
   });
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    refetch();
     setTimeout(() => {
       setRefreshing(false);
+      refetch();
     }, 2000);
   }, []);
 
   const displayTabContent = () => {
     switch (activeTab) {
-      case "Qualifications":
+      case "Qualification":
         return (
           <Specifics
-            title="Qualifications"
+            title="Qualification"
             points={data[0]?.job_highlights?.Qualifications ?? ["N/A"]}
           />
         );
@@ -70,27 +68,27 @@ const JobDetails = () => {
     }
   };
 
-  // Set custom header for this screen
-  React.useLayoutEffect(() => {
-    navigation.setOptions({
-      headerStyle: { backgroundColor: COLORS.lightWhite },
-      headerShadowVisible: false,
-      headerLeft: () => (
-        <ScreenHeaderBtn
-          iconUrl={icons.left}
-          dimension="70%"
-          handlePress={() => navigation.goBack()}
-        />
-      ),
-      headerRight: () => (
-        <ScreenHeaderBtn iconUrl={icons.share} dimension="70%" />
-      ),
-      headerTitle: "",
-    });
-  }, [navigation]);
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.lightWhite }}>
+      <Stack.Screen
+        options={{
+          headerStyle: { backgroundColor: COLORS.lightWhite },
+          headerShadowVisible: false,
+          headerBackVisible: false,
+          headerLeft: () => (
+            <ScreenHeaderBtn
+              iconUrl={icons.left}
+              dimension="70%"
+              handlePress={() => router.back()}
+            />
+          ),
+          headerRight: () => (
+            <ScreenHeaderBtn iconUrl={icons.share} dimension="70%" />
+          ),
+          headerTitle: "",
+        }}
+      />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -123,14 +121,12 @@ const JobDetails = () => {
         )}
       </ScrollView>
 
-      {!isLoading && data.length > 0 && (
-        <JobFooter
-          url={
-            data[0]?.job_google_link ??
-            "https://careers.google.com/jobs/results/"
-          }
-        />
-      )}
+      <JobFooter
+        url={
+          data[0]?.job_google_link ??
+          "https://careers.google.com/jobs/results/"
+        }
+      />
     </SafeAreaView>
   );
 };

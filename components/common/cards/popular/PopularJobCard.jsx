@@ -12,12 +12,17 @@ const PopularJobCard = ({ item, selectedJob, handleCardPress }) => {
       <View style={styles.logoContainer(selectedJob, item)}>
         <Image
           source={{
-            uri: checkImageURL(item.employer_logo)
+            uri: item.employer_logo && item.employer_logo !== null && item.employer_logo !== ""
               ? item.employer_logo
-              : 'https://dummyimage.com/100x100/cccccc/000000&text=No+Logo',
+              : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoiRex6jj6ikQceZCw2f9_uX5UCmcjUafRMEPP&s=0",
           }}
           resizeMode="contain"
           style={styles.logoImage}
+          onError={(error) => {
+            console.log('Popular job image failed to load for:', item.employer_name, 'URL:', item.employer_logo);
+            // Fallback to default image on error
+            error.target.src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoiRex6jj6ikQceZCw2f9_uX5UCmcjUafRMEPP&s=0";
+          }}
         />
       </View>
 

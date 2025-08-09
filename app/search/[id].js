@@ -1,16 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, TouchableOpacity, View, Text, SafeAreaView } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
+import { Text, SafeAreaView } from "react-native";
+import axios from "axios";
 
-import { ScreenHeaderBtn, NearbyJobCard } from '../../components';
-import { COLORS, icons, SIZES } from '../../constants';
-import styles from '../../styles/search';
+import { ScreenHeaderBtn, NearbyJobCard } from "../../components";
+import { COLORS, icons, SIZES } from "../../constants";
+import styles from "../../styles/search";
 
 const JobSearch = () => {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { id } = route.params || {}; // passed from previous screen
+    const params = useLocalSearchParams();
+  const router = useRouter();
 
   const [searchResult, setSearchResult] = useState([]);
   const [searchLoader, setSearchLoader] = useState(false);
@@ -18,79 +24,91 @@ const JobSearch = () => {
   const [page, setPage] = useState(1);
 
   const handleSearch = async () => {
+    if (!params.id) return; // Don't search until param is ready
+
     setSearchLoader(true);
-    setSearchResult([]);
+    setSearchError(null);
 
     try {
       const options = {
-        method: 'GET',
+        method: "GET",
         url: `https://jsearch.p.rapidapi.com/search`,
         headers: {
-          'X-RapidAPI-Key': '548e1c0fd9mshebee90d3bb73d71p19e3f3jsn39e71cc34c35',
-          'X-RapidAPI-Host': 'jsearch.p.rapidapi.com',
+          "x-rapidapi-key": process.env.RAPID_API_KEY || "fac640148emsh98597c99c1d1525p1b47dejsnf6dc3b2eff87",
+          "x-rapidapi-host": "jsearch.p.rapidapi.com",
         },
         params: {
-          query: id,
+          query: params.id,
           page: page.toString(),
         },
       };
 
       const response = await axios.request(options);
-      setSearchResult(response.data.data);
+      setSearchResult(response.data.data || []);
     } catch (error) {
+      console.log("Search error:", error);
       setSearchError(error);
-      console.log(error);
     } finally {
       setSearchLoader(false);
     }
   };
 
   const handlePagination = (direction) => {
-    if (direction === 'left' && page > 1) {
+    if (direction === "left" && page > 1) {
       setPage((prev) => prev - 1);
-    } else if (direction === 'right') {
+    } else if (direction === "right") {
       setPage((prev) => prev + 1);
     }
   };
 
+  // Refetch when param or page changes
   useEffect(() => {
     handleSearch();
-  }, [page, id]);
+  }, [params.id, page]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.lightWhite }}>
-      {/* Custom Header */}
-      <View style={{ padding: SIZES.medium, flexDirection: 'row', alignItems: 'center' }}>
-        <ScreenHeaderBtn
-          iconUrl={icons.left}
-          dimension="60%"
-          handlePress={() => navigation.goBack()}
-        />
-        <Text style={{ fontSize: 18, fontWeight: 'bold', marginLeft: 10 }}>{id}</Text>
-      </View>
+      <Stack.Screen
+        options={{
+          headerStyle: { backgroundColor: COLORS.lightWhite },
+          headerShadowVisible: false,
+          headerLeft: () => (
+            <ScreenHeaderBtn
+              iconUrl={icons.left}
+              dimension="60%"
+              handlePress={() => router.back()}
+            />
+          ),
+          headerTitle: () => null,
+          headerCenter: () => null,
+        }}
+      />
 
       <FlatList
         data={searchResult}
         renderItem={({ item }) => (
           <NearbyJobCard
             job={item}
-            handleNavigate={() => navigation.navigate('JobDetails', { jobId: item.job_id })}
+            handleNavigate={() => router.push(`/job-details/${item.job_id}`)}
           />
         )}
         keyExtractor={(item) => item.job_id}
-        contentContainerStyle={{ padding: SIZES.medium, rowGap: SIZES.medium }}
+        contentContainerStyle={{
+          padding: SIZES.medium,
+          rowGap: SIZES.medium,
+        }}
         ListHeaderComponent={() => (
           <>
             <View style={styles.container}>
-              <Text style={styles.searchTitle}>{id}</Text>
+              <Text style={styles.searchTitle}>{params.id}</Text>
               <Text style={styles.noOfSearchedJobs}>Job Opportunities</Text>
             </View>
             <View style={styles.loaderContainer}>
               {searchLoader ? (
                 <ActivityIndicator size="large" color={COLORS.primary} />
-              ) : searchError && (
+              ) : searchError ? (
                 <Text>Oops something went wrong</Text>
-              )}
+              ) : null}
             </View>
           </>
         )}
@@ -98,7 +116,7 @@ const JobSearch = () => {
           <View style={styles.footerContainer}>
             <TouchableOpacity
               style={styles.paginationButton}
-              onPress={() => handlePagination('left')}
+              onPress={() => handlePagination("left")}
             >
               <Image
                 source={icons.chevronLeft}
@@ -111,7 +129,7 @@ const JobSearch = () => {
             </View>
             <TouchableOpacity
               style={styles.paginationButton}
-              onPress={() => handlePagination('right')}
+              onPress={() => handlePagination("right")}
             >
               <Image
                 source={icons.chevronRight}
